@@ -33,9 +33,13 @@ module type Proof_intf = sig
 
   type t
 
-  val verification_key : Verification_key.t Lazy.t
+  val verification_key_promise : Verification_key.t Promise.t Lazy.t
 
-  val id : Cache.Wrap.Key.Verification.t Lazy.t
+  val verification_key : Verification_key.t Deferred.t Lazy.t
+
+  val id_promise : Cache.Wrap.Key.Verification.t Promise.t Lazy.t
+
+  val id : Cache.Wrap.Key.Verification.t Deferred.t Lazy.t
 
   val verify : (statement * t) list -> unit Or_error.t Deferred.t
 
@@ -89,7 +93,9 @@ module Side_loaded : sig
 
     val typ : (Checked.t, t) Impls.Step.Typ.t
 
-    val of_compiled : _ Tag.t -> t
+    val of_compiled_promise : _ Tag.t -> t Promise.t
+
+    val of_compiled : _ Tag.t -> t Deferred.t
 
     module Max_branches : Nat.Add.Intf
 
@@ -161,9 +167,10 @@ type ('max_proofs_verified, 'branches, 'prev_varss) wrap_main_generic =
            Wrap_verifier.index'
          , 'branches )
          Vector.t
+         Promise.t
          Lazy.t
       -> (int, 'branches) Pickles_types.Vector.t
-      -> (Import.Domains.t, 'branches) Pickles_types.Vector.t
+      -> (Import.Domains.t, 'branches) Pickles_types.Vector.t Promise.t
       -> (module Pickles_types.Nat.Add.Intf with type n = 'max_proofs_verified)
       -> ('max_proofs_verified, 'max_local_max_proofs_verifieds) Requests.Wrap.t
          * (   ( ( Impls.Wrap.Field.t
@@ -192,6 +199,8 @@ type ('max_proofs_verified, 'branches, 'prev_varss) wrap_main_generic =
                , Impls.Wrap.Field.t )
                Composition_types.Wrap.Statement.t
             -> unit )
+           Promise.t
+           Lazy.t
         (** An override for wrap_main, which allows for adversarial testing
               with an 'invalid' pickles statement by passing a dummy proof.
           *)
@@ -266,12 +275,24 @@ type ('max_proofs_verified, 'branches, 'prev_varss) wrap_main_generic =
           *)
   }
 
+module Storables : sig
+  type t =
+    { step_storable : Cache.Step.storable
+    ; step_vk_storable : Cache.Step.vk_storable
+    ; wrap_storable : Cache.Wrap.storable
+    ; wrap_vk_storable : Cache.Wrap.vk_storable
+    }
+
+  val default : t
+end
+
 (** This compiles a series of inductive rules defining a set into a proof
       system for proving membership in that set, with a prover corresponding
       to each inductive rule. *)
 val compile_with_wrap_main_override_promise :
      ?self:('var, 'value, 'max_proofs_verified, 'branches) Tag.t
   -> ?cache:Key_cache.Spec.t list
+  -> ?storables:Storables.t
   -> ?proof_cache:Proof_cache.t
   -> ?disk_keys:
        (Cache.Step.Key.Verification.t, 'branches) Vector.t
@@ -305,7 +326,7 @@ val compile_with_wrap_main_override_promise :
            , 'ret_value
            , 'auxiliary_var
            , 'auxiliary_value )
-           H4_6.T(Inductive_rule).t )
+           H4_6.T(Inductive_rule.Promise).t )
   -> unit
   -> ('var, 'value, 'max_proofs_verified, 'branches) Tag.t
      * Cache_handle.t
@@ -334,9 +355,10 @@ val wrap_main_dummy_override :
        Wrap_verifier.index'
      , 'branches )
      Vector.t
+     Promise.t
      Lazy.t
   -> (int, 'branches) Pickles_types.Vector.t
-  -> (Import.Domains.t, 'branches) Pickles_types.Vector.t
+  -> (Import.Domains.t Promise.t, 'branches) Pickles_types.Vector.t
   -> (module Pickles_types.Nat.Add.Intf with type n = 'max_proofs_verified)
   -> ('max_proofs_verified, 'max_local_max_proofs_verifieds) Requests.Wrap.t
      * (   ( ( Impls.Wrap.Field.t
@@ -364,6 +386,8 @@ val wrap_main_dummy_override :
            , Impls.Wrap.Field.t )
            Composition_types.Wrap.Statement.t
         -> unit )
+       Promise.t
+       Lazy.t
 
 module Make_adversarial_test : functor
   (_ : sig
