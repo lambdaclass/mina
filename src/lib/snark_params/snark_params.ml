@@ -16,23 +16,23 @@ module Make_snarkable (Impl : Snarky_backendless.Snark_intf.S) = struct
   module Bits = struct
     module type Lossy =
       Bits_intf.Snarkable.Lossy
-        with type ('a, 'b) typ := ('a, 'b) Typ.t
-         and type 'a checked := 'a Checked.t
-         and type boolean_var := Boolean.var
+      with type ('a, 'b) typ := ('a, 'b) Typ.t
+       and type 'a checked := 'a Checked.t
+       and type boolean_var := Boolean.var
 
     module type Faithful =
       Bits_intf.Snarkable.Faithful
-        with type ('a, 'b) typ := ('a, 'b) Typ.t
-         and type 'a checked := 'a Checked.t
-         and type boolean_var := Boolean.var
+      with type ('a, 'b) typ := ('a, 'b) Typ.t
+       and type 'a checked := 'a Checked.t
+       and type boolean_var := Boolean.var
 
     module type Small =
       Bits_intf.Snarkable.Small
-        with type ('a, 'b) typ := ('a, 'b) Typ.t
-         and type 'a checked := 'a Checked.t
-         and type boolean_var := Boolean.var
-         and type comparison_result := Field.Checked.comparison_result
-         and type field_var := Field.Var.t
+      with type ('a, 'b) typ := ('a, 'b) Typ.t
+       and type 'a checked := 'a Checked.t
+       and type boolean_var := Boolean.var
+       and type comparison_result := Field.Checked.comparison_result
+       and type field_var := Field.Var.t
   end
 end
 
@@ -112,10 +112,10 @@ struct
 
     module Assert = struct
       let equal : var -> var -> unit Checked.t =
-       fun a b ->
-        Bitstring_checked.Assert.equal
-          (Bitstring.Lsb_first.to_list a)
-          (Bitstring.Lsb_first.to_list b)
+        fun a b ->
+          Bitstring_checked.Assert.equal
+            (Bitstring.Lsb_first.to_list a)
+            (Bitstring.Lsb_first.to_list b)
     end
   end
 end
@@ -175,8 +175,8 @@ module Tick = struct
   include (
     Tick0 :
       module type of Tick0
-        with module Field := Tick0.Field
-         and module Inner_curve := Tick0.Inner_curve )
+    with module Field := Tick0.Field
+     and module Inner_curve := Tick0.Inner_curve )
 
   module Field = struct
     include Hashable.Make (Tick0.Field)
@@ -215,8 +215,8 @@ module Tick = struct
             let add =
               Some
                 (fun p1 p2 ->
-                  Run.make_checked (fun () ->
-                      Pickles.Step_main_inputs.Ops.add_fast p1 p2 ) )
+                   Run.make_checked (fun () ->
+                       Pickles.Step_main_inputs.Ops.add_fast p1 p2 ) )
           end)
 
       let add_known_unsafe t x = add_unsafe t (constant x)
