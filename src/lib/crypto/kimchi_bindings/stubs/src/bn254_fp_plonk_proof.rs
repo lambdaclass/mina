@@ -75,7 +75,7 @@ pub fn caml_bn254_fp_plonk_proof_create_json(
     index: CamlBn254FpPlonkIndexPtr<'static>,
     witness: Vec<CamlBn254FpVector>,
     runtime_tables: Vec<CamlRuntimeTable<CamlBn254Fp>>,
-) -> Result<String, ocaml::Error> {
+) -> Result<(String, String), ocaml::Error> {
     {
         let ptr: &mut SRS<Bn254> =
             unsafe { &mut *((&index.as_ref().0.srs.full_srs as *const SRS<Bn254>) as *mut _) };
@@ -108,7 +108,9 @@ pub fn caml_bn254_fp_plonk_proof_create_json(
         )
         .map_err(|e| ocaml::Error::Error(e.into()))?;
 
-        let serialized = rmp_serde::to_vec_named(&proof).unwrap();
-        Ok(base64::encode(serialized))
+        Ok((
+            serde_json::to_string(&proof)?,
+            serde_json::to_string(index)?,
+        ))
     })
 }

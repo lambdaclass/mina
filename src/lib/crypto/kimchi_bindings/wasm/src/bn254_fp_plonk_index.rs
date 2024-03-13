@@ -242,8 +242,9 @@ pub fn caml_bn254_fp_plonk_index_write(
 
 #[wasm_bindgen]
 pub fn caml_bn254_fp_plonk_index_serialize(index: &WasmBn254FpPlonkIndex) -> String {
-    let serialized = rmp_serde::to_vec(&index.0).unwrap();
-    base64::encode(serialized)
+    // let serialized = rmp_serde::to_vec(&index.0).unwrap();
+    // base64::encode(serialized)
+    serde_json::to_string(&index.0).unwrap()
 }
 
 // helpers

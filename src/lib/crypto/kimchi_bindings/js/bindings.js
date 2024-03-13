@@ -1234,7 +1234,11 @@ var caml_bn254_fp_plonk_proof_create_json = function (
     prev_challenges,
     prev_sgs
   );
-  return proof.serialize();
+  var serializedProof = proof.serialize();
+  var serializedIndex = plonk_wasm.caml_bn254_fp_plonk_index_serialize(index);
+  console.log("serializedProof:");
+  console.log(serializedProof);
+  return [0, serializedProof, serializedIndex];
 };
 
 // oracles

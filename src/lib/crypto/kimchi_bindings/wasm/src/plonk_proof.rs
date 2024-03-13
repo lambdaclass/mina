@@ -626,8 +626,9 @@ macro_rules! impl_proof {
                 #[wasm_bindgen]
                 pub fn serialize(&self) -> String {
                     let (proof, _public_input) = self.into();
-                    let serialized = rmp_serde::to_vec_named(&proof).unwrap();
-                    base64::encode(serialized)
+                    // let serialized = rmp_serde::to_vec_named(&proof).unwrap();
+                    // base64::encode(serialized)
+                    serde_json::to_string(&proof).unwrap()
                 }
             }
 
