@@ -695,6 +695,7 @@ fn generate_kimchi_bindings(mut w: impl std::io::Write, env: &mut Env) {
 
             decl_module!(w, env, "Bn254Fp", {
                 decl_func!(w, env, caml_bn254_fp_plonk_proof_create => "create");
+                decl_func!(w, env, caml_bn254_fp_plonk_proof_create_json => "create_json");
             });
         });
     });
