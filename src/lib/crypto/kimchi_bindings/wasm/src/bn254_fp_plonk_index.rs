@@ -1,5 +1,7 @@
 use ark_ec::bn::Bn;
+use ark_ec::short_weierstrass_jacobian::GroupAffine;
 use kimchi::circuits::lookup::runtime_tables::RuntimeTableCfg;
+use kimchi::keccak_sponge::Keccak256FqSponge;
 
 use crate::arkworks::WasmBn254Fp;
 use crate::gate_vector::bn254_fp::WasmGateVector;
@@ -12,8 +14,7 @@ use kimchi::circuits::{constraints::ConstraintSystem, gate::CircuitGate};
 use kimchi::linearization::expr_linearization;
 use kimchi::poly_commitment::pairing_proof::PairingProof;
 use kimchi::prover_index::ProverIndex;
-use mina_curves::bn254::{Bn254 as GAffine, Bn254Parameters, Fp};
-use mina_poseidon::{constants::PlonkSpongeConstantsKimchi, sponge::DefaultFqSponge};
+use mina_curves::bn254::{Bn254 as GAffine, Fp};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{File, OpenOptions},
@@ -158,7 +159,11 @@ pub fn caml_bn254_fp_plonk_index_create(
             srs.0.clone(),
         );
         // Compute and cache the verifier index digest
-        index.compute_verifier_index_digest::<DefaultFqSponge<Bn254Parameters, PlonkSpongeConstantsKimchi>>();
+        index.compute_verifier_index_digest::<Keccak256FqSponge<
+            ark_bn254::Fq,
+            GroupAffine<ark_bn254::g1::Parameters>,
+            ark_bn254::Fr,
+        >>();
         Ok(index)
     });
 

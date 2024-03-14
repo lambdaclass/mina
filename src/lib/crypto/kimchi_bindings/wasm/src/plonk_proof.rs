@@ -27,6 +27,8 @@ use kimchi::proof::{
 };
 use kimchi::prover_index::ProverIndex;
 use kimchi::verifier::batch_verify;
+// This function is public only for testing, it should be private
+use kimchi::verifier::to_batch;
 use mina_poseidon::{
     constants::PlonkSpongeConstantsKimchi,
     sponge::{DefaultFqSponge, DefaultFrSponge},
@@ -925,8 +927,13 @@ pub mod bn254_fp {
     use crate::bn254_fp_plonk_index::WasmBn254FpPlonkIndex;
     use crate::plonk_verifier_index::bn254_fp::WasmBn254FpPlonkVerifierIndex as WasmPlonkVerifierIndex;
     use crate::poly_comm::bn254::WasmBn254FpPolyComm as WasmPolyComm;
+    use ark_bn254::G1Affine;
     use ark_ec::bn::Bn;
+    use ark_ec::short_weierstrass_jacobian::GroupAffine;
+    use kimchi::keccak_sponge::{Keccak256FqSponge, Keccak256FrSponge};
     use mina_curves::bn254::{Bn254 as GAffine, Fp};
+    use o1_utils::FieldHelpers;
+    use poly_commitment::commitment::BatchEvaluationProof;
 
     type WasmVecVecF = WasmVecVecBn254Fp;
 
@@ -1447,7 +1454,25 @@ pub mod bn254_fp {
             let mut srs = Arc::unwrap_or_clone(index.0.srs.clone());
             srs.full_srs
                 .add_lagrange_basis(index.0.as_ref().cs.domain.d1);
-            let index = ProverIndex::create(index.0.cs.clone(), index.0.cs.endo, Arc::new(srs));
+            web_sys::console::log_1(
+                &format!(
+                    "index.0.cs.endo: {}",
+                    index.0.cs.endo.to_biguint().to_string()
+                )
+                .into(),
+            );
+            web_sys::console::log_1(
+                &format!("index.0.cs.domain.d1.size: {}", index.0.cs.domain.d1.size).into(),
+            );
+            web_sys::console::log_1(
+                &format!("index.0.cs.gates.len(): {}", index.0.cs.gates.len()).into(),
+            );
+            let mut index = ProverIndex::create(index.0.cs.clone(), index.0.cs.endo, Arc::new(srs));
+            index.compute_verifier_index_digest::<Keccak256FqSponge<
+                ark_bn254::Fq,
+                GroupAffine<ark_bn254::g1::Parameters>,
+                ark_bn254::Fr,
+            >>();
 
             web_sys::console::log_1(&"Collecting previous challenges...".into());
             let prev: Vec<RecursionChallenge<GAffine>> = {
@@ -1490,10 +1515,15 @@ pub mod bn254_fp {
             // Release the runtime lock so that other threads can run using it while we generate the proof.
             web_sys::console::log_1(&"Setting up group map...".into());
             let group_map = GroupMap::<_>::setup();
+
             web_sys::console::log_1(&"Creating proof...".into());
             let maybe_proof = ProverProof::create_recursive::<
-                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
-                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+                Keccak256FqSponge<
+                    ark_bn254::Fq,
+                    GroupAffine<ark_bn254::g1::Parameters>,
+                    ark_bn254::Fr,
+                >,
+                Keccak256FrSponge<ark_bn254::Fr>,
             >(
                 &group_map,
                 witness,
@@ -1502,6 +1532,35 @@ pub mod bn254_fp {
                 prev,
                 None,
             );
+            let prover_proof = maybe_proof.clone().unwrap();
+
+            web_sys::console::log_1(&"Verifying proof (partial)...".into());
+            let agg_proof = to_batch::<
+                G1Affine,
+                Keccak256FqSponge<
+                    ark_bn254::Fq,
+                    GroupAffine<ark_bn254::g1::Parameters>,
+                    ark_bn254::Fr,
+                >,
+                Keccak256FrSponge<ark_bn254::Fr>,
+                PairingProof<ark_ec::bn::Bn<ark_bn254::Parameters>>,
+            >(&index.verifier_index(), &prover_proof, &public_input)
+            .unwrap();
+
+            web_sys::console::log_1(&"Verifying proof (final)...".into());
+            let BatchEvaluationProof {
+                sponge: _,
+                evaluations,
+                evaluation_points,
+                polyscale,
+                evalscale: _,
+                opening,
+                combined_inner_product: _,
+            } = agg_proof;
+            let is_proof_valid =
+                opening.verify(&index.srs, &evaluations, polyscale, &evaluation_points);
+            web_sys::console::log_1(&format!("is proof valid?: {}", is_proof_valid).into());
+
             web_sys::console::log_1(&"Returning proof...".into());
             (maybe_proof, public_input)
             // });
@@ -1524,8 +1583,12 @@ pub mod bn254_fp {
             let (proof, public_input) = &proof.into();
             batch_verify::<
                 GAffine,
-                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
-                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+                Keccak256FqSponge<
+                    ark_bn254::Fq,
+                    GroupAffine<ark_bn254::g1::Parameters>,
+                    ark_bn254::Fr,
+                >,
+                Keccak256FrSponge<ark_bn254::Fr>,
                 PairingProof<Bn<ark_bn254::Parameters>>,
             >(
                 &group_map,
@@ -1578,8 +1641,12 @@ pub mod bn254_fp {
 
             batch_verify::<
                 GAffine,
-                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
-                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+                Keccak256FqSponge<
+                    ark_bn254::Fq,
+                    GroupAffine<ark_bn254::g1::Parameters>,
+                    ark_bn254::Fr,
+                >,
+                Keccak256FrSponge<ark_bn254::Fr>,
                 PairingProof<Bn<ark_bn254::Parameters>>,
             >(&group_map, &ts)
             .is_ok()
