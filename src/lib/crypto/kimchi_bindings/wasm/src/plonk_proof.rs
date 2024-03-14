@@ -1282,6 +1282,17 @@ pub mod bn254_fp {
     }
     type WasmProverProof = WasmBn254FpProverProof;
 
+    #[wasm_bindgen]
+    impl WasmBn254FpProverProof {
+        #[wasm_bindgen]
+        pub fn serialize(&self) -> String {
+            let (proof, _public_input) = self.into();
+            // let serialized = rmp_serde::to_vec_named(&proof).unwrap();
+            // base64::encode(serialized)
+            serde_json::to_string(&proof).unwrap()
+        }
+    }
+
     impl
         From<(
             &ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
