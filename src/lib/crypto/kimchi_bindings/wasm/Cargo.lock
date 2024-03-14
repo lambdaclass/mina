@@ -622,7 +622,6 @@ dependencies = [
  "tiny-keccak",
  "turshi",
  "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
@@ -885,7 +884,6 @@ dependencies = [
  "serde",
  "serde_with 1.14.0",
  "thiserror",
- "web-sys",
 ]
 
 [[package]]
