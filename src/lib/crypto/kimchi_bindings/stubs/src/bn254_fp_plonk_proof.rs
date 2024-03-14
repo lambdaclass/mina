@@ -75,7 +75,7 @@ pub fn caml_bn254_fp_plonk_proof_create_json(
     index: CamlBn254FpPlonkIndexPtr<'static>,
     witness: Vec<CamlBn254FpVector>,
     runtime_tables: Vec<CamlRuntimeTable<CamlBn254Fp>>,
-) -> Result<(String, String, String), ocaml::Error> {
+) -> Result<(String, String, String, String), ocaml::Error> {
     {
         let ptr: &mut SRS<Bn254> =
             unsafe { &mut *((&index.as_ref().0.srs.full_srs as *const SRS<Bn254>) as *mut _) };
@@ -87,6 +87,7 @@ pub fn caml_bn254_fp_plonk_proof_create_json(
         .try_into()
         .map_err(|_| ocaml::Error::Message("the witness should be a column of 15 vectors"))?;
     let index: &ProverIndex<Bn254, PairingProof<Bn<Parameters>>> = &index.as_ref().0;
+    let public_input = witness[0][0..index.cs.public].to_vec();
     let runtime_tables: Vec<RuntimeTable<Fp>> =
         runtime_tables.into_iter().map(Into::into).collect();
 
@@ -110,6 +111,7 @@ pub fn caml_bn254_fp_plonk_proof_create_json(
 
         Ok((
             serde_json::to_string(&proof)?,
+            serde_json::to_string(&public_input)?,
             serde_json::to_string(index)?,
             serde_json::to_string(&(*index.srs).clone())?,
         ))
