@@ -253,6 +253,7 @@ pub fn caml_bn254_fp_plonk_index_serialize(index: &WasmBn254FpPlonkIndex) -> Str
 
 #[wasm_bindgen]
 pub fn caml_bn254_fp_plonk_index_serialize_srs(index: &WasmBn254FpPlonkIndex) -> String {
+    web_sys::console::log_1(&format!("verifier srs: {:?}", index.0.srs.verifier_srs).into());
     serde_json::to_string(&(*index.0.srs).clone()).unwrap()
 }
 
