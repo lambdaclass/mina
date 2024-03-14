@@ -1236,9 +1236,8 @@ var caml_bn254_fp_plonk_proof_create_json = function (
   );
   var serializedProof = proof.serialize();
   var serializedIndex = plonk_wasm.caml_bn254_fp_plonk_index_serialize(index);
-  console.log("serializedProof:");
-  console.log(serializedProof);
-  return [0, serializedProof, serializedIndex];
+  var serializedSRS = plonk_wasm.caml_bn254_fp_plonk_index_serialize_srs(index);
+  return [0, serializedProof, serializedIndex, serializedSRS];
 };
 
 // oracles
