@@ -34,6 +34,7 @@ use mina_poseidon::{
 use poly_commitment::{
     commitment::{CommitmentCurve, PolyComm},
     evaluation_proof::OpeningProof,
+    pairing_proof::PairingProof,
 };
 use serde::{Deserialize, Serialize};
 
@@ -917,26 +918,737 @@ pub mod fq {
 }
 
 pub mod bn254_fp {
+    use std::sync::Arc;
+
     use super::*;
     use crate::arkworks::{WasmBn254Fp, WasmGBn254};
     use crate::bn254_fp_plonk_index::WasmBn254FpPlonkIndex;
     use crate::plonk_verifier_index::bn254_fp::WasmBn254FpPlonkVerifierIndex as WasmPlonkVerifierIndex;
     use crate::poly_comm::bn254::WasmBn254FpPolyComm as WasmPolyComm;
-    use mina_curves::bn254::{Bn254 as GAffine, Bn254Parameters, Fp, Fq};
+    use ark_bn254::Bn254;
+    use ark_ec::bn::Bn;
+    use mina_curves::bn254::{Bn254 as GAffine, Fp};
+    use poly_commitment::pairing_proof::PairingSRS;
 
-    impl_proof!(
-        caml_bn254_fp_plonk_proof,
-        WasmGBn254,
-        GAffine,
-        WasmBn254Fp,
-        Fp,
-        WasmPolyComm,
-        WasmSrs,
-        GAffineOther,
-        mina_poseidon::bn128,
-        mina_poseidon::bn128,
-        WasmBn254FpPlonkIndex,
-        WasmPlonkVerifierIndex,
-        Bn254Fp
-    );
+    type WasmVecVecF = WasmVecVecBn254Fp;
+
+    #[derive(Clone)]
+    pub struct WasmBn254FpProofEvaluations(ProofEvaluations<PointEvaluations<Vec<Fp>>>);
+    type WasmProofEvaluations = WasmBn254FpProofEvaluations;
+
+    impl wasm_bindgen::describe::WasmDescribe for WasmProofEvaluations {
+        fn describe() {
+            <JsValue as wasm_bindgen::describe::WasmDescribe>::describe()
+        }
+    }
+
+    impl wasm_bindgen::convert::FromWasmAbi for WasmProofEvaluations {
+        type Abi = <JsValue as wasm_bindgen::convert::FromWasmAbi>::Abi;
+        unsafe fn from_abi(js: Self::Abi) -> Self {
+            let js: JsValue = wasm_bindgen::convert::FromWasmAbi::from_abi(js);
+            Self(
+                ProofEvaluations::deserialize(crate::wasm_ocaml_serde::de::Deserializer::from(js))
+                    .unwrap(),
+            )
+        }
+    }
+
+    impl wasm_bindgen::convert::IntoWasmAbi for WasmProofEvaluations {
+        type Abi = <JsValue as wasm_bindgen::convert::IntoWasmAbi>::Abi;
+        fn into_abi(self) -> Self::Abi {
+            let js = self
+                .0
+                .serialize(&crate::wasm_ocaml_serde::ser::Serializer::new())
+                .unwrap();
+            wasm_bindgen::convert::IntoWasmAbi::into_abi(js)
+        }
+    }
+
+    impl From<&WasmProofEvaluations> for ProofEvaluations<PointEvaluations<Vec<Fp>>> {
+        fn from(x: &WasmProofEvaluations) -> Self {
+            x.0.clone()
+        }
+    }
+
+    impl From<WasmProofEvaluations> for ProofEvaluations<PointEvaluations<Vec<Fp>>> {
+        fn from(x: WasmProofEvaluations) -> Self {
+            x.0
+        }
+    }
+
+    impl From<&ProofEvaluations<PointEvaluations<Vec<Fp>>>> for WasmProofEvaluations {
+        fn from(x: &ProofEvaluations<PointEvaluations<Vec<Fp>>>) -> Self {
+            Self(x.clone())
+        }
+    }
+
+    impl From<ProofEvaluations<PointEvaluations<Vec<Fp>>>> for WasmProofEvaluations {
+        fn from(x: ProofEvaluations<PointEvaluations<Vec<Fp>>>) -> Self {
+            Self(x)
+        }
+    }
+
+    #[wasm_bindgen]
+    #[derive(Clone)]
+    pub struct WasmBn254FpLookupCommitments {
+        #[wasm_bindgen(skip)]
+        pub sorted: WasmVector<WasmPolyComm>,
+        #[wasm_bindgen(skip)]
+        pub aggreg: WasmPolyComm,
+        #[wasm_bindgen(skip)]
+        pub runtime: Option<WasmPolyComm>,
+    }
+
+    type WasmLookupCommitments = WasmBn254FpLookupCommitments;
+
+    #[wasm_bindgen]
+    impl WasmBn254FpLookupCommitments {
+        #[wasm_bindgen(constructor)]
+        pub fn new(
+            sorted: WasmVector<WasmPolyComm>,
+            aggreg: WasmPolyComm,
+            runtime: Option<WasmPolyComm>,
+        ) -> Self {
+            WasmLookupCommitments {
+                sorted,
+                aggreg,
+                runtime,
+            }
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn sorted(&self) -> WasmVector<WasmPolyComm> {
+            self.sorted.clone()
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn aggreg(&self) -> WasmPolyComm {
+            self.aggreg.clone()
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn runtime(&self) -> Option<WasmPolyComm> {
+            self.runtime.clone()
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_sorted(&mut self, s: WasmVector<WasmPolyComm>) {
+            self.sorted = s
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_aggreg(&mut self, a: WasmPolyComm) {
+            self.aggreg = a
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_runtime(&mut self, r: Option<WasmPolyComm>) {
+            self.runtime = r
+        }
+    }
+
+    impl From<&LookupCommitments<GAffine>> for WasmLookupCommitments {
+        fn from(x: &LookupCommitments<GAffine>) -> Self {
+            WasmLookupCommitments {
+                sorted: x.sorted.iter().map(Into::into).collect(),
+                aggreg: x.aggreg.clone().into(),
+                runtime: x.runtime.clone().map(Into::into),
+            }
+        }
+    }
+
+    impl From<LookupCommitments<GAffine>> for WasmLookupCommitments {
+        fn from(x: LookupCommitments<GAffine>) -> Self {
+            WasmLookupCommitments {
+                sorted: x.sorted.into_iter().map(Into::into).collect(),
+                aggreg: x.aggreg.into(),
+                runtime: x.runtime.map(Into::into),
+            }
+        }
+    }
+
+    impl From<&WasmLookupCommitments> for LookupCommitments<GAffine> {
+        fn from(x: &WasmLookupCommitments) -> Self {
+            LookupCommitments {
+                sorted: x.sorted.iter().map(Into::into).collect(),
+                aggreg: x.aggreg.clone().into(),
+                runtime: x.runtime.clone().map(Into::into),
+            }
+        }
+    }
+
+    impl From<WasmLookupCommitments> for LookupCommitments<GAffine> {
+        fn from(x: WasmLookupCommitments) -> Self {
+            LookupCommitments {
+                sorted: x.sorted.into_iter().map(Into::into).collect(),
+                aggreg: x.aggreg.into(),
+                runtime: x.runtime.map(Into::into),
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    #[derive(Clone)]
+    pub struct WasmBn254FpProverCommitments {
+        #[wasm_bindgen(skip)]
+        pub w_comm: WasmVector<WasmPolyComm>,
+        #[wasm_bindgen(skip)]
+        pub z_comm: WasmPolyComm,
+        #[wasm_bindgen(skip)]
+        pub t_comm: WasmPolyComm,
+        #[wasm_bindgen(skip)]
+        pub lookup: Option<WasmLookupCommitments>,
+    }
+    type WasmProverCommitments = WasmBn254FpProverCommitments;
+
+    #[wasm_bindgen]
+    impl WasmBn254FpProverCommitments {
+        #[wasm_bindgen(constructor)]
+        pub fn new(
+            w_comm: WasmVector<WasmPolyComm>,
+            z_comm: WasmPolyComm,
+            t_comm: WasmPolyComm,
+            lookup: Option<WasmLookupCommitments>,
+        ) -> Self {
+            WasmProverCommitments {
+                w_comm,
+                z_comm,
+                t_comm,
+                lookup,
+            }
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn w_comm(&self) -> WasmVector<WasmPolyComm> {
+            self.w_comm.clone()
+        }
+        #[wasm_bindgen(getter)]
+        pub fn z_comm(&self) -> WasmPolyComm {
+            self.z_comm.clone()
+        }
+        #[wasm_bindgen(getter)]
+        pub fn t_comm(&self) -> WasmPolyComm {
+            self.t_comm.clone()
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn lookup(&self) -> Option<WasmLookupCommitments> {
+            self.lookup.clone()
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_w_comm(&mut self, x: WasmVector<WasmPolyComm>) {
+            self.w_comm = x
+        }
+        #[wasm_bindgen(setter)]
+        pub fn set_z_comm(&mut self, x: WasmPolyComm) {
+            self.z_comm = x
+        }
+        #[wasm_bindgen(setter)]
+        pub fn set_t_comm(&mut self, x: WasmPolyComm) {
+            self.t_comm = x
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_lookup(&mut self, l: Option<WasmLookupCommitments>) {
+            self.lookup = l
+        }
+    }
+
+    impl From<&ProverCommitments<GAffine>> for WasmProverCommitments {
+        fn from(x: &ProverCommitments<GAffine>) -> Self {
+            WasmProverCommitments {
+                w_comm: x.w_comm.iter().map(Into::into).collect(),
+                z_comm: x.z_comm.clone().into(),
+                t_comm: x.t_comm.clone().into(),
+                lookup: x.lookup.clone().map(Into::into),
+            }
+        }
+    }
+
+    impl From<ProverCommitments<GAffine>> for WasmProverCommitments {
+        fn from(x: ProverCommitments<GAffine>) -> Self {
+            WasmProverCommitments {
+                w_comm: x.w_comm.iter().map(Into::into).collect(),
+                z_comm: x.z_comm.into(),
+                t_comm: x.t_comm.into(),
+                lookup: x.lookup.map(Into::into),
+            }
+        }
+    }
+
+    impl From<&WasmProverCommitments> for ProverCommitments<GAffine> {
+        fn from(x: &WasmProverCommitments) -> Self {
+            ProverCommitments {
+                w_comm: array_init(|i| x.w_comm[i].clone().into()),
+                z_comm: x.z_comm.clone().into(),
+                t_comm: x.t_comm.clone().into(),
+                lookup: x.lookup.clone().map(Into::into),
+            }
+        }
+    }
+
+    impl From<WasmProverCommitments> for ProverCommitments<GAffine> {
+        fn from(x: WasmProverCommitments) -> Self {
+            ProverCommitments {
+                w_comm: array_init(|i| (&x.w_comm[i]).into()),
+                z_comm: x.z_comm.into(),
+                t_comm: x.t_comm.into(),
+                lookup: x.lookup.map(Into::into),
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    #[derive(Clone, Debug)]
+    pub struct WasmBn254FpPairingProof {
+        #[wasm_bindgen(skip)]
+        pub quotient: WasmGBn254,
+        pub blinding: WasmBn254Fp,
+    }
+    type WasmPairingProof = WasmBn254FpPairingProof;
+
+    #[wasm_bindgen]
+    impl WasmBn254FpPairingProof {
+        #[wasm_bindgen(constructor)]
+        pub fn new(quotient: WasmGBn254, blinding: WasmBn254Fp) -> Self {
+            WasmPairingProof { quotient, blinding }
+        }
+
+        #[wasm_bindgen(getter)]
+        pub fn quotient(&self) -> WasmGBn254 {
+            self.quotient.clone()
+        }
+
+        #[wasm_bindgen(setter)]
+        pub fn set_quotient(&mut self, quotient: WasmGBn254) {
+            self.quotient = quotient
+        }
+    }
+
+    impl From<&WasmPairingProof> for PairingProof<Bn<ark_bn254::Parameters>> {
+        fn from(x: &WasmPairingProof) -> Self {
+            PairingProof {
+                quotient: x.quotient.clone().into(),
+                blinding: x.blinding.into(),
+            }
+        }
+    }
+
+    impl From<WasmPairingProof> for PairingProof<Bn<ark_bn254::Parameters>> {
+        fn from(x: WasmPairingProof) -> Self {
+            let WasmPairingProof { quotient, blinding } = x;
+            PairingProof {
+                quotient: quotient.into(),
+                blinding: blinding.into(),
+            }
+        }
+    }
+
+    impl From<&PairingProof<Bn<ark_bn254::Parameters>>> for WasmPairingProof {
+        fn from(x: &PairingProof<Bn<ark_bn254::Parameters>>) -> Self {
+            WasmPairingProof {
+                quotient: x.quotient.clone().into(),
+                blinding: x.blinding.into(),
+            }
+        }
+    }
+
+    impl From<PairingProof<Bn<ark_bn254::Parameters>>> for WasmPairingProof {
+        fn from(x: PairingProof<Bn<ark_bn254::Parameters>>) -> Self {
+            WasmPairingProof {
+                quotient: x.quotient.clone().into(),
+                blinding: x.blinding.into(),
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    pub struct WasmBn254FpProverProof {
+        #[wasm_bindgen(skip)]
+        pub commitments: WasmProverCommitments,
+        #[wasm_bindgen(skip)]
+        pub proof: WasmPairingProof,
+        // OCaml doesn't have sized arrays, so we have to convert to a tuple..
+        #[wasm_bindgen(skip)]
+        pub evals: WasmProofEvaluations,
+        pub ft_eval1: WasmBn254Fp,
+        #[wasm_bindgen(skip)]
+        pub public: WasmFlatVector<WasmBn254Fp>,
+        #[wasm_bindgen(skip)]
+        pub prev_challenges_scalars: Vec<Vec<Fp>>,
+        #[wasm_bindgen(skip)]
+        pub prev_challenges_comms: WasmVector<WasmPolyComm>,
+    }
+    type WasmProverProof = WasmBn254FpProverProof;
+
+    impl
+        From<(
+            &ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+            &Vec<Fp>,
+        )> for WasmProverProof
+    {
+        fn from(
+            (x, public): (
+                &ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+                &Vec<Fp>,
+            ),
+        ) -> Self {
+            let (scalars, comms) = x
+                .prev_challenges
+                .iter()
+                .map(|RecursionChallenge { chals, comm }| (chals.clone().into(), comm.into()))
+                .unzip();
+            WasmProverProof {
+                commitments: x.commitments.clone().into(),
+                proof: x.proof.clone().into(),
+                evals: x.evals.clone().into(),
+                ft_eval1: x.ft_eval1.clone().into(),
+                public: public.clone().into_iter().map(Into::into).collect(),
+                prev_challenges_scalars: scalars,
+                prev_challenges_comms: comms,
+            }
+        }
+    }
+
+    impl
+        From<(
+            ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+            Vec<Fp>,
+        )> for WasmProverProof
+    {
+        fn from(
+            (x, public): (
+                ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+                Vec<Fp>,
+            ),
+        ) -> Self {
+            let ProverProof {
+                ft_eval1,
+                commitments,
+                proof,
+                evals,
+                prev_challenges,
+            } = x;
+            let (scalars, comms) = prev_challenges
+                .into_iter()
+                .map(|RecursionChallenge { chals, comm }| (chals.into(), comm.into()))
+                .unzip();
+            WasmProverProof {
+                commitments: commitments.into(),
+                proof: proof.into(),
+                evals: evals.into(),
+                ft_eval1: ft_eval1.clone().into(),
+                public: public.into_iter().map(Into::into).collect(),
+                prev_challenges_scalars: scalars,
+                prev_challenges_comms: comms,
+            }
+        }
+    }
+
+    impl From<&WasmProverProof>
+        for (
+            ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+            Vec<Fp>,
+        )
+    {
+        fn from(x: &WasmProverProof) -> Self {
+            let proof = ProverProof {
+                commitments: x.commitments.clone().into(),
+                proof: x.proof.clone().into(),
+                evals: x.evals.clone().into(),
+                prev_challenges: (&x.prev_challenges_scalars)
+                    .into_iter()
+                    .zip((&x.prev_challenges_comms).into_iter())
+                    .map(|(chals, comm)| RecursionChallenge {
+                        chals: chals.clone(),
+                        comm: comm.into(),
+                    })
+                    .collect(),
+                ft_eval1: x.ft_eval1.clone().into(),
+            };
+            let public = x.public.clone().into_iter().map(Into::into).collect();
+            (proof, public)
+        }
+    }
+
+    impl From<WasmProverProof>
+        for (
+            ProverProof<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>,
+            Vec<Fp>,
+        )
+    {
+        fn from(x: WasmProverProof) -> Self {
+            let proof = ProverProof {
+                commitments: x.commitments.into(),
+                proof: x.proof.into(),
+                evals: x.evals.into(),
+                prev_challenges: (x.prev_challenges_scalars)
+                    .into_iter()
+                    .zip((x.prev_challenges_comms).into_iter())
+                    .map(|(chals, comm)| RecursionChallenge {
+                        chals: chals.into(),
+                        comm: comm.into(),
+                    })
+                    .collect(),
+                ft_eval1: x.ft_eval1.into(),
+            };
+            let public = x.public.into_iter().map(Into::into).collect();
+            (proof, public)
+        }
+    }
+
+    #[wasm_bindgen]
+    pub struct WasmBn254FpRuntimeTable {
+        id: i32,
+        data: WasmFlatVector<WasmBn254Fp>,
+    }
+    type WasmRuntimeTable = WasmBn254FpRuntimeTable;
+
+    #[wasm_bindgen]
+    impl WasmBn254FpRuntimeTable {
+        #[wasm_bindgen(constructor)]
+        pub fn new(id: i32, data: WasmFlatVector<WasmBn254Fp>) -> WasmRuntimeTable {
+            WasmRuntimeTable { id, data }
+        }
+    }
+
+    impl From<WasmBn254FpRuntimeTable> for RuntimeTable<Fp> {
+        fn from(wasm_rt: WasmRuntimeTable) -> RuntimeTable<Fp> {
+            RuntimeTable {
+                id: wasm_rt.id.into(),
+                data: wasm_rt.data.into_iter().map(Into::into).collect(),
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn caml_bn254_fp_plonk_proof_create(
+        index: &WasmBn254FpPlonkIndex,
+        witness: WasmVecVecF,
+        wasm_runtime_tables: WasmVector<WasmRuntimeTable>,
+        prev_challenges: WasmFlatVector<WasmBn254Fp>,
+        prev_sgs: WasmVector<WasmGBn254>,
+    ) -> Result<WasmProverProof, JsError> {
+        console_error_panic_hook::set_once();
+        // let (maybe_proof, public_input) = crate::rayon::run_in_pool(|| {
+        let (maybe_proof, public_input) = {
+            // FIXME: this is hacky, this should be optimized to avoid cloning
+            let mut srs = Arc::unwrap_or_clone(index.0.srs.clone());
+            srs.full_srs
+                .add_lagrange_basis(index.0.as_ref().cs.domain.d1);
+            let index = ProverIndex::create(index.0.cs.clone(), index.0.cs.endo, Arc::new(srs));
+
+            web_sys::console::log_1(&"Collecting previous challenges...".into());
+            let prev: Vec<RecursionChallenge<GAffine>> = {
+                if prev_challenges.is_empty() {
+                    Vec::new()
+                } else {
+                    let challenges_per_sg = prev_challenges.len() / prev_sgs.len();
+                    prev_sgs
+                        .into_iter()
+                        .map(Into::<GAffine>::into)
+                        .enumerate()
+                        .map(|(i, sg)| {
+                            let chals = prev_challenges
+                                [(i * challenges_per_sg)..(i + 1) * challenges_per_sg]
+                                .iter()
+                                .map(|a| a.clone().into())
+                                .collect();
+                            let comm = PolyComm::<GAffine> {
+                                unshifted: vec![sg],
+                                shifted: None,
+                            };
+                            RecursionChallenge { chals, comm }
+                        })
+                        .collect()
+                }
+            };
+
+            web_sys::console::log_1(&"Collecting runtime tables...".into());
+            let rust_runtime_tables: Vec<RuntimeTable<Fp>> =
+                wasm_runtime_tables.into_iter().map(Into::into).collect();
+
+            web_sys::console::log_1(&"Reading witness...".into());
+            let witness: [Vec<_>; COLUMNS] = witness
+                .0
+                .try_into()
+                .expect("the witness should be a column of 15 vectors");
+
+            let public_input = witness[0][0..index.cs.public].to_vec();
+
+            // Release the runtime lock so that other threads can run using it while we generate the proof.
+            web_sys::console::log_1(&"Setting up group map...".into());
+            let group_map = GroupMap::<_>::setup();
+            web_sys::console::log_1(&"Creating proof...".into());
+            let maybe_proof = ProverProof::create_recursive::<
+                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
+                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+            >(
+                &group_map,
+                witness,
+                &rust_runtime_tables,
+                &index,
+                prev,
+                None,
+            );
+            web_sys::console::log_1(&"Returning proof...".into());
+            (maybe_proof, public_input)
+            // });
+        };
+
+        return match maybe_proof {
+            Ok(proof) => Ok((proof, public_input).into()),
+            Err(err) => Err(JsError::from(err)),
+        };
+    }
+
+    #[wasm_bindgen]
+    pub fn caml_bn254_fp_plonk_proof_verify(
+        index: WasmPlonkVerifierIndex,
+        proof: WasmProverProof,
+    ) -> bool {
+        crate::rayon::run_in_pool(|| {
+            let group_map = <GAffine as CommitmentCurve>::Map::setup();
+            let verifier_index = &index.into();
+            let (proof, public_input) = &proof.into();
+            batch_verify::<
+                GAffine,
+                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
+                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+                PairingProof<Bn<ark_bn254::Parameters>>,
+            >(
+                &group_map,
+                &[Context {
+                    verifier_index,
+                    proof,
+                    public_input,
+                }],
+            )
+            .is_ok()
+        })
+    }
+
+    #[wasm_bindgen]
+    pub struct WasmVecVecBn254FpPolyComm(Vec<Vec<PolyComm<GAffine>>>);
+
+    #[wasm_bindgen]
+    impl WasmVecVecBn254FpPolyComm {
+        #[wasm_bindgen(constructor)]
+        pub fn create(n: i32) -> Self {
+            WasmVecVecBn254FpPolyComm(Vec::with_capacity(n as usize))
+        }
+
+        #[wasm_bindgen]
+        pub fn push(&mut self, x: WasmVector<WasmPolyComm>) {
+            self.0.push(x.into_iter().map(Into::into).collect())
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn caml_bn254_fp_plonk_proof_batch_verify(
+        indexes: WasmVector<WasmPlonkVerifierIndex>,
+        proofs: WasmVector<WasmProverProof>,
+    ) -> bool {
+        crate::rayon::run_in_pool(|| {
+            let ts: Vec<_> = indexes
+                .into_iter()
+                .zip(proofs.into_iter())
+                .map(|(index, proof)| (index.into(), proof.into()))
+                .collect();
+            let ts: Vec<_> = ts
+                .iter()
+                .map(|(verifier_index, (proof, public_input))| Context {
+                    verifier_index,
+                    proof,
+                    public_input,
+                })
+                .collect();
+            let group_map = GroupMap::<_>::setup();
+
+            batch_verify::<
+                GAffine,
+                DefaultFqSponge<_, PlonkSpongeConstantsKimchi>,
+                DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
+                PairingProof<Bn<ark_bn254::Parameters>>,
+            >(&group_map, &ts)
+            .is_ok()
+        })
+    }
+
+    #[wasm_bindgen]
+    pub fn caml_bn254_fp_plonk_proof_dummy() -> WasmProverProof {
+        fn comm() -> PolyComm<GAffine> {
+            let g = GAffine::prime_subgroup_generator();
+            PolyComm {
+                shifted: Some(g),
+                unshifted: vec![g, g, g],
+            }
+        }
+
+        let prev = RecursionChallenge {
+            chals: vec![Fp::one(), Fp::one()],
+            comm: comm(),
+        };
+        let prev_challenges = vec![prev.clone(), prev.clone(), prev.clone()];
+
+        let g = GAffine::prime_subgroup_generator();
+        let proof = PairingProof {
+            quotient: g,
+            blinding: Fp::one(),
+        };
+        let eval = || PointEvaluations {
+            zeta: vec![Fp::one()],
+            zeta_omega: vec![Fp::one()],
+        };
+        let evals = ProofEvaluations {
+            w: array_init(|_| eval()),
+            coefficients: array_init(|_| eval()),
+            z: eval(),
+            s: array_init(|_| eval()),
+            generic_selector: eval(),
+            poseidon_selector: eval(),
+            complete_add_selector: eval(),
+            mul_selector: eval(),
+            emul_selector: eval(),
+            endomul_scalar_selector: eval(),
+            range_check0_selector: None,
+            range_check1_selector: None,
+            foreign_field_add_selector: None,
+            foreign_field_mul_selector: None,
+            xor_selector: None,
+            rot_selector: None,
+            lookup_aggregation: None,
+            lookup_table: None,
+            lookup_sorted: array::from_fn(|_| None),
+            runtime_lookup_table: None,
+            runtime_lookup_table_selector: None,
+            xor_lookup_selector: None,
+            lookup_gate_lookup_selector: None,
+            range_check_lookup_selector: None,
+            foreign_field_mul_lookup_selector: None,
+            public: None,
+        };
+
+        let dlogproof = ProverProof {
+            commitments: ProverCommitments {
+                w_comm: array_init(|_| comm()),
+                z_comm: comm(),
+                t_comm: comm(),
+                lookup: None,
+            },
+            proof,
+            evals,
+            ft_eval1: Fp::one(),
+            prev_challenges,
+        };
+
+        let public = vec![Fp::one(), Fp::one()];
+        (dlogproof, public).into()
+    }
+
+    #[wasm_bindgen]
+    pub fn caml_bn254_fp_plonk_proof_deep_copy(x: WasmProverProof) -> WasmProverProof {
+        x
+    }
 }
