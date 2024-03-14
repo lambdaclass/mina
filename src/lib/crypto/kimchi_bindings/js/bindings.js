@@ -1234,10 +1234,10 @@ var caml_bn254_fp_plonk_proof_create_json = function (
     prev_challenges,
     prev_sgs
   );
-  var [serializedProof, serializedPublicInput] = proof.serialize();
+  var proofWithPublic = proof.serialize();
   var serializedIndex = plonk_wasm.caml_bn254_fp_plonk_index_serialize(index);
   var serializedSRS = plonk_wasm.caml_bn254_fp_plonk_index_serialize_srs(index);
-  return [0, serializedProof, serializedPublicInput, serializedIndex, serializedSRS];
+  return [0, proofWithPublic, serializedIndex, serializedSRS];
 };
 
 // oracles

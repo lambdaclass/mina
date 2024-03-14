@@ -925,10 +925,8 @@ pub mod bn254_fp {
     use crate::bn254_fp_plonk_index::WasmBn254FpPlonkIndex;
     use crate::plonk_verifier_index::bn254_fp::WasmBn254FpPlonkVerifierIndex as WasmPlonkVerifierIndex;
     use crate::poly_comm::bn254::WasmBn254FpPolyComm as WasmPolyComm;
-    use ark_bn254::Bn254;
     use ark_ec::bn::Bn;
     use mina_curves::bn254::{Bn254 as GAffine, Fp};
-    use poly_commitment::pairing_proof::PairingSRS;
 
     type WasmVecVecF = WasmVecVecBn254Fp;
 
@@ -1286,10 +1284,11 @@ pub mod bn254_fp {
     impl WasmBn254FpProverProof {
         #[wasm_bindgen]
         pub fn serialize(&self) -> String {
-            let (proof, _public_input) = self.into();
+            let (proof, public_input) = self.into();
             // let serialized = rmp_serde::to_vec_named(&proof).unwrap();
             // base64::encode(serialized)
-            serde_json::to_string(&proof).unwrap()
+            let public_input_limbs: Vec<_> = public_input.iter().map(|p_i| p_i.0 .0).collect();
+            serde_json::to_string(&(proof, public_input_limbs)).unwrap()
         }
     }
 
