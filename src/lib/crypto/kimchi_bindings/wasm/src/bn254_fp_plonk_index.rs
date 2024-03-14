@@ -251,6 +251,11 @@ pub fn caml_bn254_fp_plonk_index_serialize(index: &WasmBn254FpPlonkIndex) -> Str
     serde_json::to_string(&index.0).unwrap()
 }
 
+#[wasm_bindgen]
+pub fn caml_bn254_fp_plonk_index_serialize_srs(index: &WasmBn254FpPlonkIndex) -> String {
+    serde_json::to_string(&(*index.0.srs).clone()).unwrap()
+}
+
 // helpers
 
 fn format_field(f: &Fp) -> String {
