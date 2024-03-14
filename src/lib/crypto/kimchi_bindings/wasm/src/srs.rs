@@ -442,6 +442,7 @@ pub mod bn254_fp {
     pub fn caml_bn254_fp_srs_create(depth: i32) -> WasmBn254FpSrs {
         // This seed (42) is also used for generating a trusted setup in Solidity.
         let x = ark_bn254::Fr::from(42);
+        web_sys::console::log_1(&format!("depth: {}", depth).into());
         Arc::new(PairingSRS::create(x, depth as usize)).into()
     }
 
