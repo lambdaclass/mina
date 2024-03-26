@@ -1,0 +1,8 @@
+(executable
+ (name state_verifier)
+ (public_name state_verifier)
+ (package state_verifier)
+ ; (preprocess
+ ; (pps ppx_deriving_yojson))
+ (libraries core_kernel core stdio mina_block mina_base))
+
