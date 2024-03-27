@@ -11,6 +11,7 @@ module Internal_transition = Internal_transition
 module External_transition = External_transition
 module External_transition_precomputed =
   External_transition_sample_precomputed_block
+module Block = Block
 
 type fully_invalid_block = Validation.fully_invalid_with_block
 
