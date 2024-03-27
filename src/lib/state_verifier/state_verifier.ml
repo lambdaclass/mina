@@ -37,4 +37,11 @@ let verifier =
 let verification_result =
   (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
 
-let () = Printf.printf verification_result
+let final_res =
+  match verification_result with
+  | Ok true ->
+      printf "Proof verified successfully"
+  | Ok false ->
+      printf "Proof did not verify"
+  | Error err ->
+      "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
