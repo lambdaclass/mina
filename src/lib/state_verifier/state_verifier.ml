@@ -9,11 +9,13 @@
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
 
-let block = Yojson.Safe.from_string serialized_block
+let json_block = Yojson.Safe.from_string serialized_block l
 
-let () = match block with Ok _ -> () | Error _ -> ()
+let block = Mina_block.Precomputed.of_yojson json_block
 
-(* let () = print_endline block *)
+let () = print_endline block
+
+(* let () = match block with Ok _ -> () | Error _ -> () *)
 
 (*
    Verifier.verify_blockchain_snarks verifier, to_verify
