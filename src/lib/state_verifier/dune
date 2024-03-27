@@ -6,6 +6,9 @@
   (pps ppx_deriving_yojson))
  (libraries
   async
+  async_unix
+  async_kernel
+  base.caml
   core_kernel
   core
   stdio
