@@ -35,11 +35,12 @@ let verifier =
         ~conf_dir:None )
 
 let verification_result =
-  Verifier.verify_blockchain_snarks verifier [ blockchain ]
+  Async.Thread_safe.block_on_async_exn (fun () ->
+      Verifier.verify_blockchain_snarks verifier [ blockchain ] )
 
-let final_res =
-  match verification_result with
-  | Ok final ->
-      final
-  | Error err ->
-      "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
+(* let final_res =
+   match verification_result with
+   | Ok final ->
+       final
+   | Error err ->
+       "Failed while verifying proofs:\n%s" (Error.to_string_hum err) *)
