@@ -13,9 +13,9 @@ let json_block = Yojson.Safe.from_string serialized_block
 
 let block =
   match Mina_block.Precomputed.of_yojson json_block with
-  | Result.Ok block ->
+  | Ok block, _ ->
       block
-  | Result.Error err ->
+  | Error err, _ ->
       failwithf "Could not read block: %s" err ()
 
 (* let block =
