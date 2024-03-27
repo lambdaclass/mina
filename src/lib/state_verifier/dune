@@ -9,6 +9,7 @@
   core
   stdio
   mina_block
+  mina_state
   mina_base
   result
   error_json
