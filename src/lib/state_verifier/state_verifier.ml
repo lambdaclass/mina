@@ -27,12 +27,11 @@ let logger = Logger.create ()
 let conf_dir = Cli_lib.Flag.conf_dir
 
 let%bind verifier =
-  Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
+  Verifier.create~logger ~proof_level:Genesis_constants.Proof_level.compiled
     ~constraint_constants:Genesis_constants.Constraint_constants.compiled
     ~pids:(Child_processes.Termination.create_pid_table ())
-    ~conf_dir:None
-in
-let%bind result = (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
+    ~conf_dir:None in
+  let%bind result = (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
 in
 match result with
 | Ok true -> 
@@ -44,4 +43,4 @@ match result with
 | Error err ->
   printf "Failed while verifying proofs:\n%s"
     (Error.to_string_hum err) ;
-  exit 2
+  exit 2;
