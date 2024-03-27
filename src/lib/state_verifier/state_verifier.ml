@@ -15,25 +15,25 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-let convert_to_stable_v1 (block_abs : Mina_block.Precomputed.t) :
-    Mina_block.Precomputed.Stable.V1.t =
-  let scheduled_time = block_abs.scheduled_time in
-  let protocol_state = block_abs.protocol_state in
-  let protocol_state_proof = block_abs.protocol_state_proof in
-  let staged_ledger_diff = block_abs.staged_ledger_diff in
-  let delta_transition_chain_proof = block_abs.delta_transition_chain_proof in
-  { Mina_block.Precomputed.Stable.V1.scheduled_time
-  ; protocol_state
-  ; protocol_state_proof
-  ; staged_ledger_diff
-  ; delta_transition_chain_proof
-  }
+(* let convert_to_stable_v1 (block_abs : Mina_block.Precomputed.t) :
+     Mina_block.Precomputed.Stable.V1.t =
+   let scheduled_time = block_abs.scheduled_time in
+   let protocol_state = block_abs.protocol_state in
+   let protocol_state_proof = block_abs.protocol_state_proof in
+   let staged_ledger_diff = block_abs.staged_ledger_diff in
+   let delta_transition_chain_proof = block_abs.delta_transition_chain_proof in
+   { Mina_block.Precomputed.Stable.V1.scheduled_time
+   ; protocol_state
+   ; protocol_state_proof
+   ; staged_ledger_diff
+   ; delta_transition_chain_proof
+   } *)
 
-let v1_block = convert_to_stable_v1 block
+(* let v1_block = convert_to_stable_v1 block *)
 
-(* let state = block.protocol_state
+let state = block.protocol_state
 
-   let proof = block.protocol_state_proof *)
+let proof = block.protocol_state_proof
 
 let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
