@@ -24,4 +24,5 @@
   logger
   cli_lib
   genesis_constants
-  child_processes))
+  child_processes
+  parallel))
