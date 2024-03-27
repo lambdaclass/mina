@@ -15,7 +15,7 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-let header = Block.header @@ With_hash.data block
+let header = Mina_block.Block.header @@ With_hash.data block
 
 let () = print_endline block
 
