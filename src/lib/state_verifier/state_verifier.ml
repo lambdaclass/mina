@@ -44,5 +44,5 @@ let () =
       print_endline "Proof verified successfully"
   | Ok false ->
       print_endline "Proof did not verify"
-  | Error err ->
+  | Error _err ->
       print_endline "Failed while verifying proofs:\n"
