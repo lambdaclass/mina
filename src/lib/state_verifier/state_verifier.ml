@@ -26,7 +26,7 @@ let logger = Logger.create ()
 
 let conf_dir = Cli_lib.Flag.conf_dir
 
-let verifier =
+let&bind verifier =
   Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
     ~constraint_constants:Genesis_constants.Constraint_constants.compiled
     ~pids:(Child_processes.Termination.create_pid_table ())
