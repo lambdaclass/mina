@@ -11,13 +11,28 @@ let serialized_block =
 
 let json_block = Yojson.Safe.from_string serialized_block
 
-let result: (Mina_block.Precomputed.Stable.V1, string) result = Mina_block.Precomputed.of_yojson json_block
+let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-let state = block.protocol_state
+let convert_to_stable_v1 (t_instance : T.t) : Stable.V1.t =
+  let scheduled_time = t_instance.scheduled_time in
+  let protocol_state = t_instance.protocol_state in
+  let protocol_state_proof = t_instance.protocol_state_proof in
+  let staged_ledger_diff = t_instance.staged_ledger_diff in
+  let delta_transition_chain_proof = t_instance.delta_transition_chain_proof in
+  { Stable.V1.scheduled_time
+  ; protocol_state
+  ; protocol_state_proof
+  ; staged_ledger_diff
+  ; delta_transition_chain_proof
+  }
 
-let proof = block.protocol_state_proof
+let v1_block = convert_to_stable_v1 block
+
+(* let state = block.protocol_state
+
+   let proof = block.protocol_state_proof *)
 
 let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
