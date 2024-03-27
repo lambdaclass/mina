@@ -16,7 +16,7 @@ let _blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let logger = Logger.create ()
 
-let conf_dir = Cli_lib.Flag.conf_dir ()
+let conf_dir = Cli_lib.Flag.conf_dir
 (* let verifier =
    Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
      ~constraint_constants:Genesis_constants.Constraint_constants.compiled
