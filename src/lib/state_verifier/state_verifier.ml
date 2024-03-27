@@ -20,7 +20,7 @@ let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
 
 let proof = block.protocol_state_proof
 
-let _blockchain = Blockchain_snark.Blockchain.create ~state ~proof
+let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let logger = Logger.create ()
 
@@ -32,8 +32,6 @@ let verifier =
     ~pids:(Child_processes.Termination.create_pid_table ())
     ~conf_dir:None
 
-let () = print_endline "State verified successfully"
+let _result = (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
 
-(*
-   Verifier.verify_blockchain_snarks verifier, to_verify
-*)
+let () = print_endline "State verified successfully"
