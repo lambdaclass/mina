@@ -34,6 +34,7 @@ let verifier =
         ~pids:(Child_processes.Termination.create_pid_table ())
         ~conf_dir:None )
 
-let result = (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
+let verification_result =
+  (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
 
-let () = Printf.printf result
+let () = Printf.printf verification_result
