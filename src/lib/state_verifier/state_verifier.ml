@@ -39,9 +39,6 @@ let verification_result =
 
 let final_res =
   match verification_result with
-  | Ok true ->
-      printf "Proof verified successfully"
-  | Ok false ->
-      printf "Proof did not verify"
+  | Ok final ->
   | Error err ->
       "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
