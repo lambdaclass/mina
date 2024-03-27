@@ -11,7 +11,7 @@ let serialized_block =
 
 let json_block = Yojson.Safe.from_string serialized_block
 
-let result = Mina_block.Precomputed.Stable.V1.of_yojson json_block
+let result: (Mina_block.Precomputed.Stable.V1, string) result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
