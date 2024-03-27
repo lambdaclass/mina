@@ -15,8 +15,9 @@ let block =
   match Mina_block.Precomputed.of_yojson json_block with
   | Ok block_inner ->
       block_inner
-  | Error err ->
-      failwithf "Could not read block: %s" err ()
+  | Error _ ->
+      (* failwithf "Could not read block: %s" err () *)
+      ()
 
 (* let block =
    match
