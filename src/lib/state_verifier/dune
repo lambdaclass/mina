@@ -5,7 +5,7 @@
  (preprocess
   (pps ppx_deriving_yojson))
  (libraries
-  async_unix
+  unix
   core_kernel
   core
   stdio
