@@ -31,7 +31,8 @@ let block = Result.get_ok result
 
 (* let v1_block = convert_to_stable_v1 block *)
 
-let state : Mina_state.Protocol_state.Value.Stable.Latest = block.protocol_state
+let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
+  block.protocol_state
 
 let proof = block.protocol_state_proof
 
