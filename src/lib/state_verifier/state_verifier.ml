@@ -15,9 +15,9 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-let state = Mina_block.Precomputed.protocol_state block
+let state = block.protocol_state
 
-let proof = Mina_block.Precomputed.protocol_state_proof block
+(* let proof = Mina_block.Precomputed.protocol_state_proof block *)
 
 (* let header = Mina_block.Precomputed.header block *)
 
