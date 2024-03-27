@@ -15,27 +15,9 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-(* let block =
-   match result with
-   | Ok block ->
-       (* block_inner *)
-       ()
-   | Error _ ->
-       (* failwithf "Could not read block: %s" err () *)
-       () *)
-
-(* let block =
-   match
-     Yojson.Safe.from_string serialized_block |> Mina_block.Precomputed.of_yojson
-   with
-   | Ok block ->
-       block
-   | Error err ->
-       failwithf "Could not read block: %s" err () *)
+let header = Block.header @@ With_hash.data block
 
 let () = print_endline block
-
-(* let () = match block with Ok _ -> () | Error _ -> () *)
 
 (*
    Verifier.verify_blockchain_snarks verifier, to_verify
