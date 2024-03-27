@@ -14,4 +14,6 @@
   result
   error_json
   with_hash
-  blockchain_snark))
+  blockchain_snark
+  verifier
+  logger))

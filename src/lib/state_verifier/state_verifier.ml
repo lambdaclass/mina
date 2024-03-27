@@ -1,11 +1,3 @@
-(* let read_whole_file filename =
-     (* open_in_bin works correctly on Unix and Windows *)
-     let ch = open_in_bin filename in
-     let s = really_input_string ch (in_channel_length ch) in
-     close_in ch ; s
-   let proof = read_whole_file "../../../../proof.txt"
-   let decoded_proof = Mina_block.Precomputed.Proof.of_bin_string proof *)
-
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
 
@@ -21,6 +13,13 @@ let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
 let proof = block.protocol_state_proof
 
 let _blockchain = Blockchain_snark.Blockchain.create ~state ~proof
+
+let logger = Logger.create ()
+
+(* let verifier =
+   Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
+     ~constraint_constants:Genesis_constants.Constraint_constants.compiled
+     ~pids:(Pid.Table.create ()) ~conf_dir:(Some conf_dir) *)
 
 let () = print_endline "State verified successfully"
 
