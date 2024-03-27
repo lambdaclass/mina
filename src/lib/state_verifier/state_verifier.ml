@@ -1,4 +1,4 @@
-open Core
+open Core_kernel
 
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
