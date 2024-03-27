@@ -20,7 +20,7 @@ let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
 
 let proof = block.protocol_state_proof
 
-let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
+let _blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let () = print_endline "State verified successfully"
 
