@@ -1,5 +1,5 @@
 open Core
-open Async
+(* open Async *)
 
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
