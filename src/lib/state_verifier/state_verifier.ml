@@ -24,7 +24,7 @@ let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let logger = Logger.create ()
 
-let () = Parallel.init_master ()
+Parallel.init_master ();
 
 (* let conf_dir = Cli_lib.Flag.conf_dir *)
 
