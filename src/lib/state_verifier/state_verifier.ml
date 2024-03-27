@@ -1,6 +1,8 @@
 open Core
 (* open Async *)
 
+Parallel.init_master () ;
+
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
 
