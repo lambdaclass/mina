@@ -38,9 +38,9 @@ let verification_result =
   Async.Thread_safe.block_on_async_exn (fun () ->
       Verifier.verify_blockchain_snarks verifier [ blockchain ] )
 
-(* let final_res =
-   match verification_result with
-   | Ok final ->
-       final
-   | Error err ->
-       "Failed while verifying proofs:\n%s" (Error.to_string_hum err) *)
+let () =
+  match verification_result with
+  | Ok final ->
+      printf "Verification %s" final
+  | Error err ->
+      "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
