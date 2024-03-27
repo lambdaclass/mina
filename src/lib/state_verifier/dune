@@ -16,4 +16,5 @@
   with_hash
   blockchain_snark
   verifier
-  logger))
+  logger
+  cli_lib))
