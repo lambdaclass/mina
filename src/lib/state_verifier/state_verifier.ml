@@ -45,4 +45,5 @@ let () =
   | Ok false ->
       Printf.printf "Proof did not verify"
   | Error err ->
-      "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
+      Printf.printf "Failed while verifying proofs:\n%s"
+        (Error.to_string_hum err)
