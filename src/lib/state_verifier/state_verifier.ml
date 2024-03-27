@@ -11,6 +11,8 @@ let serialized_block =
 
 let block = Yojson.Safe.from_string serialized_block
 
+let () = print_endline block
+
 (*
    Verifier.verify_blockchain_snarks verifier, to_verify
 *)
