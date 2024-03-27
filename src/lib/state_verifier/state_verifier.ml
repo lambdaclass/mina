@@ -41,9 +41,8 @@ let verification_result =
 let () =
   match verification_result with
   | Ok true ->
-      Printf.printf "Proof verified successfully"
+      print_endline "Proof verified successfully"
   | Ok false ->
-      Printf.printf "Proof did not verify"
+      print_endline "Proof did not verify"
   | Error err ->
-      Printf.printf "Failed while verifying proofs:\n%s"
-        (Error.to_string_hum err)
+      print_endline "Failed while verifying proofs:\n"
