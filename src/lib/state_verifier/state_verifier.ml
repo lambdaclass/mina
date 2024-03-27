@@ -11,9 +11,8 @@ let serialized_block =
 
 let block = Yojson.Safe.from_string serialized_block
 
-match block with
-| Ok block_inner -> print_endline block_inner
-| _ -> ()
+let () =
+  match block with Ok block_inner -> print_endline block_inner | _ -> ()
 
 (* let () = print_endline block *)
 
