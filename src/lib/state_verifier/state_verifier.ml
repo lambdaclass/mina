@@ -22,9 +22,9 @@ let proof = block.protocol_state_proof
 
 let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
-let logger = Logger.create ()
-let () = Parallel.init_master ();
+let () = Parallel.init_master ()
 
+let logger = Logger.create ()
 
 (* let conf_dir = Cli_lib.Flag.conf_dir *)
 
