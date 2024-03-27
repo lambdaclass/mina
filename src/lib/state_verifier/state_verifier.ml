@@ -40,5 +40,6 @@ let verification_result =
 let final_res =
   match verification_result with
   | Ok final ->
+      final
   | Error err ->
       "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
