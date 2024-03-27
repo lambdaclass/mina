@@ -7,7 +7,12 @@ let json_block = Yojson.Safe.from_string serialized_block
 
 let result = Mina_block.Precomputed.of_yojson json_block
 
-let block = match result with Ok block -> block | Error err -> ()
+let block =
+  match result with
+  | Ok block ->
+      block
+  | Error err ->
+      failwithf "Could not read block: %s" err ()
 
 let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
   block.protocol_state
