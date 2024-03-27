@@ -29,7 +29,7 @@ let conf_dir = Cli_lib.Flag.conf_dir
 let verifier =
   Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
     ~constraint_constants:Genesis_constants.Constraint_constants.compiled
-    ~pids:(Pid.Table.create ()) ~conf_dir:(Some conf_dir)
+    ~pids:Pid.Table.create ~conf_dir:(Some conf_dir)
 
 let () = print_endline "State verified successfully"
 
