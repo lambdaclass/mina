@@ -11,20 +11,21 @@ let serialized_block =
 
 (* let json_block = Yojson.Safe.from_string serialized_block *)
 
-(* let block = *)
-(* match Mina_block.Precomputed.of_yojson json_block with
+let block =
+  match Mina_block.Precomputed.of_yojson json_block with
+  | Result.Ok block ->
+      block
+  | Result.Error err ->
+      failwithf "Could not read block: %s" err ()
+
+(* let block =
+   match
+     Yojson.Safe.from_string serialized_block |> Mina_block.Precomputed.of_yojson
+   with
    | Ok block ->
        block
    | Error err ->
        failwithf "Could not read block: %s" err () *)
-let block =
-  match
-    Yojson.Safe.from_string serialized_block |> Mina_block.Precomputed.of_yojson
-  with
-  | Ok block ->
-      block
-  | Error err ->
-      failwithf "Could not read block: %s" err ()
 
 let () = print_endline block
 
