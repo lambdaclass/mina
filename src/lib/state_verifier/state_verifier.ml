@@ -15,7 +15,8 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block = Result.get_ok result
 
-let convert_to_stable_v1 (block_abs : Mina_block.Precomputed.T) : Mina_block.Precomputed.Stable.V1.t =
+let convert_to_stable_v1 (block_abs : Mina_block.Precomputed.T.t) :
+    Mina_block.Precomputed.Stable.V1.t =
   let scheduled_time = block_abs.scheduled_time in
   let protocol_state = block_abs.protocol_state in
   let protocol_state_proof = block_abs.protocol_state_proof in
