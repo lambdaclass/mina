@@ -17,7 +17,7 @@ let result = Mina_block.Precomputed.of_yojson json_block
 
 let block =
   match result with
-  | Ok (Mina_block.Precomputed_block block) ->
+  | Ok block ->
       (* block_inner *)
       ()
   | Error _ ->

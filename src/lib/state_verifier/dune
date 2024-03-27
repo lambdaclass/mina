@@ -4,4 +4,4 @@
  (package state_verifier)
  (preprocess
   (pps ppx_deriving_yojson))
- (libraries core_kernel core stdio mina_block mina_base))
+ (libraries core_kernel core stdio mina_block mina_base result error_json))
