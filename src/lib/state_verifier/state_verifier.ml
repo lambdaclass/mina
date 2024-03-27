@@ -40,7 +40,9 @@ let verification_result =
 
 let () =
   match verification_result with
-  | Ok final ->
-      printf "Verification %s" final
+  | Ok true ->
+      printf "Proof verified successfully"
+  | Ok false ->
+      printf "Proof did not verify"
   | Error err ->
       "Failed while verifying proofs:\n%s" (Error.to_string_hum err)
