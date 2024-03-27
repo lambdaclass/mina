@@ -35,7 +35,7 @@ let verifier =
         ~conf_dir:None )
 
 let verification_result =
-  (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
+  Verifier.verify_blockchain_snarks verifier [ blockchain ]
 
 let final_res =
   match verification_result with
