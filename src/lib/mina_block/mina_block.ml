@@ -9,6 +9,8 @@ module Validated = Validated_block
 module Precomputed = Precomputed_block
 module Internal_transition = Internal_transition
 module External_transition = External_transition
+module External_transition_precomputed =
+  External_transition_sample_precomputed_block
 
 type fully_invalid_block = Validation.fully_invalid_with_block
 

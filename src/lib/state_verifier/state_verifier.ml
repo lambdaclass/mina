@@ -7,7 +7,7 @@
    let decoded_proof = Mina_block.Precomputed.Proof.of_bin_string proof *)
 
 let serialized_block =
-  Mina_block.External_transition_sample_precomputed_block.sample_block_json
+  Mina_block.External_transition_precomputed.sample_block_json
 
 (* let block = Yojson.Safe.from_string serialized_block *)
 
