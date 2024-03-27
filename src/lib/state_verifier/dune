@@ -9,6 +9,7 @@
   async_unix
   async_kernel
   base.caml
+  mina_user_error
   core_kernel
   core
   stdio
