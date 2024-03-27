@@ -24,7 +24,7 @@ let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let logger = Logger.create ()
 
-let conf_dir = Cli_lib.Flag.conf_dir
+(* let conf_dir = Cli_lib.Flag.conf_dir *)
 
 let verifier =
   Async.Thread_safe.block_on_async_exn (fun () ->
@@ -34,4 +34,6 @@ let verifier =
         ~pids:(Child_processes.Termination.create_pid_table ())
         ~conf_dir:None )
 
-let result = (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
+let result =
+  (Verifier.verify_blockchain_snarks verifier, [ blockchain ])
+    Printf.printf result
