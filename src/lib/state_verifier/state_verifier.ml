@@ -9,7 +9,7 @@
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
 
-let json_block = Yojson.Safe.from_string serialized_block l
+let json_block = Yojson.Safe.from_string serialized_block
 
 let block = Mina_block.Precomputed.of_yojson json_block
 
