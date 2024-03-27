@@ -1,6 +1,5 @@
 open Core
 open Async
-include Hashable.Make_binable (Pid)
 
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json

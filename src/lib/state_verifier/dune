@@ -19,4 +19,5 @@
   verifier
   logger
   cli_lib
-  genesis_constants))
+  genesis_constants
+  child_processes))
