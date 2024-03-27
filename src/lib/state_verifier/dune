@@ -12,5 +12,4 @@
   mina_base
   result
   error_json
-  with_hash
-  block))
+  with_hash))
