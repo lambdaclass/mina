@@ -17,4 +17,5 @@
   blockchain_snark
   verifier
   logger
-  cli_lib))
+  cli_lib
+  genesis_constants))
