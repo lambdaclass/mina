@@ -13,14 +13,16 @@ let json_block = Yojson.Safe.from_string serialized_block
 
 let result = Mina_block.Precomputed.of_yojson json_block
 
-let block =
-  match result with
-  | Ok _ ->
-      (* block_inner *)
-      ()
-  | Error _ ->
-      (* failwithf "Could not read block: %s" err () *)
-      ()
+let block = Result.get_ok result
+
+(* let block =
+   match result with
+   | Ok _ ->
+       (* block_inner *)
+       ()
+   | Error _ ->
+       (* failwithf "Could not read block: %s" err () *)
+       () *)
 
 (* let block =
    match
