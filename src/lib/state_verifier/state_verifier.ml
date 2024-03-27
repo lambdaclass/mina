@@ -9,7 +9,7 @@
 let serialized_block =
   Mina_block.External_transition_precomputed.sample_block_json
 
-let json_block = Yojson.Safe.from_string serialized_block
+(* let json_block = Yojson.Safe.from_string serialized_block *)
 
 (* let block = *)
 (* match Mina_block.Precomputed.of_yojson json_block with
@@ -19,7 +19,7 @@ let json_block = Yojson.Safe.from_string serialized_block
        failwithf "Could not read block: %s" err () *)
 let block =
   match
-    Yojson.Safe.from_string json_block |> Mina_block.Precomputed.of_yojson
+    Yojson.Safe.from_string serialized_block |> Mina_block.Precomputed.of_yojson
   with
   | Ok block ->
       block
