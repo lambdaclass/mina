@@ -17,6 +17,10 @@ let block = Result.get_ok result
 
 let state = block.protocol_state
 
+let proof = block.protocol_state_proof
+
+let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
+
 (* let proof = Mina_block.Precomputed.protocol_state_proof block *)
 
 (* let header = Mina_block.Precomputed.header block *)
