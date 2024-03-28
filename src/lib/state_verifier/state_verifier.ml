@@ -38,7 +38,8 @@ let verifier =
 
 let verification_result =
   Async.Thread_safe.block_on_async_exn (fun () ->
-      Verifier.verify_blockchain_snarks verifier [ blockchain ] )
+      (* Verifier.verify_blockchain_snarks verifier [ blockchain ] ) *)
+      Verifier.Worker_state.verify_blockchain_snarks [ blockchain ] )
 
 let () =
   match verification_result with
