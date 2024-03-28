@@ -20,7 +20,7 @@ let state : Mina_state.Protocol_state.Value.Stable.Latest.t =
 
 let proof = block.protocol_state_proof
 
-let lala = Blockchain_snark.verify state proof
+let lalala = Blockchain_snark.verify state proof
 
 let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
@@ -40,7 +40,7 @@ let verifier =
 
 let verification_result =
   Async.Thread_safe.block_on_async_exn (fun () ->
-      (* Verifier.verify_blockchain_snarks verifier [ blockchain ] ) *)
+      Verifier.verify_blockchain_snarks verifier [ blockchain ] )
 
 let () =
   match verification_result with
