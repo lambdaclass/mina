@@ -49,12 +49,12 @@ let logger = Logger.create ()
      | Error _err ->
          print_endline "Failed while verifying proofs:\n" *)
 
+open Async in
 let%bind verifier =
   Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
     ~constraint_constants:Genesis_constants.Constraint_constants.compiled
     ~pids:(Child_processes.Termination.create_pid_table ())
     ~conf_dir:None
-    
 in
 let%bind verification_result =
       Verifier.verify_blockchain_snarks verifier [ blockchain ]
