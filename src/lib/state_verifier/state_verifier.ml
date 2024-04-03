@@ -28,41 +28,41 @@ let blockchain = Blockchain_snark.Blockchain.create ~state ~proof
 
 let logger = Logger.create ()
 
-(* let verifier =
-     Async.Thread_safe.block_on_async_exn (fun () ->
-         Verifier.create ~logger
-           ~proof_level:Genesis_constants.Proof_level.compiled
-           ~constraint_constants:Genesis_constants.Constraint_constants.compiled
-           ~pids:(Child_processes.Termination.create_pid_table ())
-           ~conf_dir:None )
+let verifier =
+  Async.Thread_safe.block_on_async_exn (fun () ->
+      Verifier.create ~logger
+        ~proof_level:Genesis_constants.Proof_level.compiled
+        ~constraint_constants:Genesis_constants.Constraint_constants.compiled
+        ~pids:(Child_processes.Termination.create_pid_table ())
+        ~conf_dir:None )
 
-   let verification_result =
-     Async.Thread_safe.block_on_async_exn (fun () ->
-         Verifier.verify_blockchain_snarks verifier [ blockchain ] )
+let verification_result =
+  Async.Thread_safe.block_on_async_exn (fun () ->
+      Verifier.verify_blockchain_snarks verifier [ blockchain ] )
 
-   let () =
-     match verification_result with
-     | Ok true ->
-         print_endline "Proof verified successfully"
-     | Ok false ->
-         print_endline "Proof did not verify"
-     | Error _err ->
-         print_endline "Failed while verifying proofs:\n" *)
+let () =
+  match verification_result with
+  | Ok true ->
+      print_endline "Proof verified successfully"
+  | Ok false ->
+      print_endline "Proof did not verify"
+  | Error _err ->
+      print_endline "Failed while verifying proofs:\n"
 
-open Async in
-let%bind verifier =
-  Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
-    ~constraint_constants:Genesis_constants.Constraint_constants.compiled
-    ~pids:(Child_processes.Termination.create_pid_table ())
-    ~conf_dir:None
-in
-let%bind verification_result =
-      Verifier.verify_blockchain_snarks verifier [ blockchain ]
-in
-match verification_result with
-| Ok true ->
-    print_endline "Proof verified successfully"
-| Ok false ->
-    print_endline "Proof did not verify"
-| Error _err ->
-    print_endline "Failed while verifying proofs:\n"
+(* open Async in
+   let%bind verifier =
+     Verifier.create ~logger ~proof_level:Genesis_constants.Proof_level.compiled
+       ~constraint_constants:Genesis_constants.Constraint_constants.compiled
+       ~pids:(Child_processes.Termination.create_pid_table ())
+       ~conf_dir:None
+   in
+   let%bind verification_result =
+         Verifier.verify_blockchain_snarks verifier [ blockchain ]
+   in
+   match verification_result with
+   | Ok true ->
+       print_endline "Proof verified successfully"
+   | Ok false ->
+       print_endline "Proof did not verify"
+   | Error _err ->
+       print_endline "Failed while verifying proofs:\n" *)
