@@ -1,4 +1,7 @@
+use ark_ec::bn::Bn;
+use ark_ec::short_weierstrass_jacobian::GroupAffine;
 use kimchi::circuits::lookup::runtime_tables::RuntimeTableCfg;
+use kimchi::keccak_sponge::Keccak256FqSponge;
 
 use crate::arkworks::WasmBn254Fp;
 use crate::gate_vector::bn254_fp::WasmGateVector;
@@ -9,10 +12,9 @@ use ark_poly::EvaluationDomain;
 use kimchi::circuits::lookup::tables::LookupTable;
 use kimchi::circuits::{constraints::ConstraintSystem, gate::CircuitGate};
 use kimchi::linearization::expr_linearization;
-use kimchi::poly_commitment::evaluation_proof::OpeningProof;
+use kimchi::poly_commitment::pairing_proof::PairingProof;
 use kimchi::prover_index::ProverIndex;
-use mina_curves::bn254::{Bn254 as GAffine, Bn254Parameters, Fp};
-use mina_poseidon::{constants::PlonkSpongeConstantsKimchi, sponge::DefaultFqSponge};
+use mina_curves::bn254::{Bn254 as GAffine, Fp};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{File, OpenOptions},
@@ -27,7 +29,7 @@ use wasm_bindgen::prelude::*;
 /// Boxed so that we don't store large proving indexes in the OCaml heap.
 #[wasm_bindgen]
 pub struct WasmBn254FpPlonkIndex(
-    #[wasm_bindgen(skip)] pub Box<ProverIndex<GAffine, OpeningProof<GAffine>>>,
+    #[wasm_bindgen(skip)] pub Box<ProverIndex<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>>,
 );
 
 // This should mimic LookupTable structure
@@ -151,10 +153,17 @@ pub fn caml_bn254_fp_plonk_index_create(
             ptr.add_lagrange_basis(cs.domain.d1);
         }
 
-        let mut index =
-            ProverIndex::<GAffine, OpeningProof<GAffine>>::create(cs, endo_q, srs.0.clone());
+        let mut index = ProverIndex::<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>::create(
+            cs,
+            endo_q,
+            srs.0.clone(),
+        );
         // Compute and cache the verifier index digest
-        index.compute_verifier_index_digest::<DefaultFqSponge<Bn254Parameters, PlonkSpongeConstantsKimchi>>();
+        index.compute_verifier_index_digest::<Keccak256FqSponge<
+            ark_bn254::Fq,
+            GroupAffine<ark_bn254::g1::Parameters>,
+            ark_bn254::Fr,
+        >>();
         Ok(index)
     });
 
@@ -167,7 +176,7 @@ pub fn caml_bn254_fp_plonk_index_create(
 
 #[wasm_bindgen]
 pub fn caml_bn254_fp_plonk_index_max_degree(index: &WasmBn254FpPlonkIndex) -> i32 {
-    index.0.srs.max_degree() as i32
+    index.0.srs.full_srs.max_degree() as i32
 }
 
 #[wasm_bindgen]
@@ -210,7 +219,7 @@ pub fn caml_bn254_fp_plonk_index_read(
     }
 
     // deserialize the index
-    let mut t = ProverIndex::<GAffine, OpeningProof<GAffine>>::deserialize(
+    let mut t = ProverIndex::<GAffine, PairingProof<Bn<ark_bn254::Parameters>>>::deserialize(
         &mut rmp_serde::Deserializer::new(r),
     )
     .map_err(|err| JsValue::from_str(&format!("caml_bn254_fp_plonk_index_read: {err}")))?;
@@ -242,8 +251,15 @@ pub fn caml_bn254_fp_plonk_index_write(
 
 #[wasm_bindgen]
 pub fn caml_bn254_fp_plonk_index_serialize(index: &WasmBn254FpPlonkIndex) -> String {
-    let serialized = rmp_serde::to_vec(&index.0).unwrap();
-    base64::encode(serialized)
+    // let serialized = rmp_serde::to_vec(&index.0).unwrap();
+    // base64::encode(serialized)
+    serde_json::to_string(&index.0).unwrap()
+}
+
+#[wasm_bindgen]
+pub fn caml_bn254_fp_plonk_index_serialize_srs(index: &WasmBn254FpPlonkIndex) -> String {
+    web_sys::console::log_1(&format!("verifier srs: {:?}", index.0.srs.verifier_srs).into());
+    serde_json::to_string(&(*index.0.srs).clone()).unwrap()
 }
 
 // helpers

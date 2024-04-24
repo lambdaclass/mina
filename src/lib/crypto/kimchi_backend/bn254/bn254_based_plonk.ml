@@ -102,4 +102,29 @@ module Proof = struct
           witness )
     in
     Kimchi_bindings.Protocol.Proof.Bn254Fp.create pk.index witness_cols runtime_tables
+
+  let create_json (pk : Keypair.t) (primary_inputs : Field.Vector.t) (auxiliary_inputs : Field.Vector.t) =
+    (* external values contains [1, primary..., auxiliary ] *)
+    let get_external_values i =
+      let open Field.Vector in
+      if i < length primary_inputs then get primary_inputs i
+      else get auxiliary_inputs (i - length primary_inputs)
+    in
+
+    (* compute witness *)
+    let computed_witness, runtime_tables =
+      R1CS_constraint_system.compute_witness pk.cs get_external_values
+    in
+    let num_rows = Array.length computed_witness.(0) in
+
+    (* convert to Rust vector *)
+    let witness_cols =
+      Array.init Kimchi_backend_common.Constants.columns ~f:(fun col ->
+          let witness = Field.Vector.create () in
+          for row = 0 to num_rows - 1 do
+            Field.Vector.emplace_back witness computed_witness.(col).(row)
+          done ;
+          witness )
+    in
+    Kimchi_bindings.Protocol.Proof.Bn254Fp.create_json pk.index witness_cols runtime_tables
 end

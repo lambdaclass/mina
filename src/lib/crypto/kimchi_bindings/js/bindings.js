@@ -1211,6 +1211,35 @@ var caml_bn254_fp_plonk_proof_create = function (
   return tsRustConversion.bn254Fp.proofFromRust(proof);
 };
 
+// Provides: caml_bn254_fp_plonk_proof_create_json
+// Requires: plonk_wasm, tsRustConversion
+var caml_bn254_fp_plonk_proof_create_json = function (
+  index,
+  witness_cols,
+  caml_runtime_tables
+) {
+  var w = new plonk_wasm.WasmVecVecBn254Fp(witness_cols.length - 1);
+  for (var i = 1; i < witness_cols.length; i++) {
+    w.push(tsRustConversion.bn254Fp.vectorToRust(witness_cols[i]));
+  }
+  witness_cols = w;
+  var prev_challenges = tsRustConversion.bn254Fp.vectorToRust([]);
+  var wasm_runtime_tables =
+    tsRustConversion.bn254Fp.runtimeTablesToRust(caml_runtime_tables);
+  var prev_sgs = tsRustConversion.bn254Fp.pointsToRust([]);
+  var proof = plonk_wasm.caml_bn254_fp_plonk_proof_create(
+    index,
+    witness_cols,
+    wasm_runtime_tables,
+    prev_challenges,
+    prev_sgs
+  );
+  var proofWithPublic = proof.serialize();
+  var serializedIndex = plonk_wasm.caml_bn254_fp_plonk_index_serialize(index);
+  var serializedSRS = plonk_wasm.caml_bn254_fp_plonk_index_serialize_srs(index);
+  return [0, proofWithPublic, serializedIndex, serializedSRS];
+};
+
 // oracles
 
 // Provides: fp_oracles_create

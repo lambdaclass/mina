@@ -45,9 +45,9 @@ module Digest = struct
   let to_bits ?length x =
     match length with
     | None ->
-        Field.unpack x
+      Field.unpack x
     | Some length ->
-        List.take (Field.unpack x) length
+      List.take (Field.unpack x) length
 end
 
 include Sponge.Make_hash (Random_oracle_permutation)
@@ -93,6 +93,16 @@ module Checked = struct
   let digest xs = xs.(0)
 end
 
+module Checked_bn254 = struct
+  module Inputs = Pickles.Bn254_main_inputs.Sponge.Permutation
+
+  include Sponge.Make_hash (Inputs)
+
+  let params = Sponge.Params.map ~f:Inputs.Field.constant Kimchi_bn254_basic.poseidon_params_fp
+
+  let update ~state xs = update params ~state xs
+end
+
 let read_typ ({ field_elements; packeds } : _ Input.Chunked.t) =
   let open Pickles.Impls.Step in
   let open As_prover in
@@ -101,7 +111,7 @@ let read_typ ({ field_elements; packeds } : _ Input.Chunked.t) =
   }
 
 let read_typ' input : _ Pickles.Impls.Step.Internal_Basic.As_prover.t =
- fun _ -> read_typ input
+  fun _ -> read_typ input
 
 [%%endif]
 

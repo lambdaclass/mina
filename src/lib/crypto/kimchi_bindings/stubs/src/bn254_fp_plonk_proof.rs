@@ -68,3 +68,56 @@ pub fn caml_bn254_fp_plonk_proof_create(
         Ok((proof, public_input).into())
     })
 }
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn caml_bn254_fp_plonk_proof_create_json(
+    index: CamlBn254FpPlonkIndexPtr<'static>,
+    witness: Vec<CamlBn254FpVector>,
+    runtime_tables: Vec<CamlRuntimeTable<CamlBn254Fp>>,
+) -> Result<(String, String, String), ocaml::Error> {
+    {
+        let ptr: &mut SRS<Bn254> =
+            unsafe { &mut *((&index.as_ref().0.srs.full_srs as *const SRS<Bn254>) as *mut _) };
+        ptr.add_lagrange_basis(index.as_ref().0.cs.domain.d1);
+    }
+
+    let witness: Vec<Vec<_>> = witness.iter().map(|x| (*x.0).clone()).collect();
+    let witness: [Vec<_>; COLUMNS] = witness
+        .try_into()
+        .map_err(|_| ocaml::Error::Message("the witness should be a column of 15 vectors"))?;
+    let index: &ProverIndex<Bn254, PairingProof<Bn<Parameters>>> = &index.as_ref().0;
+    let public_input: Vec<_> = witness[0][0..index.cs.public]
+        .to_vec()
+        .iter()
+        .map(|p_i| p_i.0 .0)
+        .collect();
+
+    let runtime_tables: Vec<RuntimeTable<Fp>> =
+        runtime_tables.into_iter().map(Into::into).collect();
+
+    // NB: This method is designed only to be used by tests. However, since creating a new reference will cause `drop` to be called on it once we are done with it. Since `drop` calls `caml_shutdown` internally, we *really, really* do not want to do this, but we have no other way to get at the active runtime.
+    // TODO: There's actually a way to get a handle to the runtime as a function argument. Switch
+    // to doing this instead.
+    let runtime = unsafe { ocaml::Runtime::recover_handle() };
+
+    // Release the runtime lock so that other threads can run using it while we generate the proof.
+    runtime.releasing_runtime(|| {
+        let group_map = GroupMap::<Fq>::setup();
+        let proof = ProverProof::create_recursive::<BaseSponge, ScalarSponge>(
+            &group_map,
+            witness,
+            &runtime_tables,
+            index,
+            Vec::new(),
+            None,
+        )
+        .map_err(|e| ocaml::Error::Error(e.into()))?;
+
+        Ok((
+            serde_json::to_string(&(proof, public_input))?,
+            serde_json::to_string(index)?,
+            serde_json::to_string(&(*index.srs).clone())?,
+        ))
+    })
+}
