@@ -1,0 +1,4 @@
+(executable
+ (public_name merkle_root_parser)
+ (name main)
+ (libraries mina_base merkle_root_parser))
