@@ -7,4 +7,4 @@ let read_whole_file filename =
 let () = read_whole_file "merkle_root.txt"
          |> Mina_base.Ledger_hash.of_base58_check_exn
          |> Snark_params.Tick.Field.to_string
-         |> print_endline
+         |> Printf.printf "%s"
